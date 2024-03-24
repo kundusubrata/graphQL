@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { auth } from "../../firebase";
 import { toast } from "react-toastify";
-import { isSignInWithEmailLink, signInWithEmailLink } from "firebase/auth";
+import { signInWithEmailLink } from "firebase/auth";
+import { AuthContext } from "../../context/authContext";
+import { useNavigate } from "react-router-dom";
 
 const CompleteRegistration = () => {
+  const { dispatch } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,30 +24,48 @@ const CompleteRegistration = () => {
       toast.error("Email and password is required");
       return;
     }
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      let email = window.localStorage.getItem("emailForRegistration");
-      if (!email) {
-        email = window.prompt("Please provide your email for confirmation");
-      }
 
-      try {
-        const result = signInWithEmailLink(auth, email, window.location.href);
-        // console.log(result);
-        if (result.user.emailVerified) {
-          // remove email from local storage
-          window.localStorage.removeItem("emailForRegistration");
-          let user = auth.currentUser;
-          await user.updatePassword(password);
-
-          // dispatch user with token and email
-          // then redirect
-        }
-      } catch (error) {
+    signInWithEmailLink(auth, email, window.location.href)
+      .then((result) => {
+        console.log(result);
+        console.log(result.user);
+        console.log(result.user.emailVerified);
+        console.log(result.emailVerified);
+        console.log(result.additionalUserInfo.isNewUser);
+        console.log(result.additionalUserInfo.emailVerified);
+        console.log(result.additionalUserInfo.profile);
+        // Clear email from storage.
+        // window.localStorage.removeItem("emailForSignIn");
+        // You can access the new user via result.user
+        // Additional user info profile not available via:
+        // result.additionalUserInfo.profile == null
+        // You can check if the user is new or existing:
+        // result.additionalUserInfo.isNewUser
+        // ==============================================
+        // if (result.user.emailVerified) {
+        //   // remove email from local storage
+        //   window.localStorage.removeItem("emailForRegistration");
+        //   let user = result.user;
+        //   await auth.updatePassword(user, password);
+  
+        //   // dispatch user with token and email
+        //   // then redirect
+        //   const idTokenResult = await user.getIdTokenResult();
+        //   dispatch({
+        //     type: "LOGGED_IN_USER",
+        //     payload: { email: user.email, token: idTokenResult.token },
+        //   });
+  
+        //   // make api request to save/update user in mongodb
+  
+        //   navigate("/");
+        // }
+      })
+      .catch((error) => {
         console.log("register complete error", error.message);
         setLoading(false);
         toast.error(error.message);
-      }
-    }
+      });
   };
 
   return (
@@ -51,7 +73,7 @@ const CompleteRegistration = () => {
       {loading ? (
         <h4 className="text-danger">Loading...</h4>
       ) : (
-        <h4>Register</h4>
+        <h4>Completed your reigistration</h4>
       )}
       <form onSubmit={handleSubmit}>
         <div className="form-group my-3">

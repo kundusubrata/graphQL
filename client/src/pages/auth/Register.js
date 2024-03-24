@@ -11,7 +11,7 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     const config = {
-      url: `http://localhost:3000/`,
+      url: `http://localhost:3000/complete-regestration`,
       handleCodeInApp: true,
     };
 
